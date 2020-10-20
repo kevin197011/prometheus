@@ -38,7 +38,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-alertmanager.rules
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25468"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-alertmanager.rules
       uid: 14173377-ee0c-4e1d-a408-be6e66483dc5
@@ -53,7 +53,7 @@ items:
                   {{ range printf "alertmanager_config_hash{namespace=\"%s\",service=\"%s\"}" $labels.namespace $labels.service | query }}
                   Configuration hash for pod {{ .Labels.pod }} is "{{ printf "%.f" .Value }}"
                   {{ end }}
-              expr:
+              expr: |-
                 count by(namespace,service) (count_values by(namespace,service) ("config_hash",
                 alertmanager_config_hash{job="prometheus-kube-prometheus-alertmanager",namespace="prometheus"}))
                 != 1
@@ -65,7 +65,7 @@ items:
                 message:
                   Reloading Alertmanager's configuration has failed for {{ $labels.namespace
                   }}/{{ $labels.pod}}.
-              expr:
+              expr: |-
                 alertmanager_config_last_reload_successful{job="prometheus-kube-prometheus-alertmanager",namespace="prometheus"}
                 == 0
               for: 10m
@@ -119,7 +119,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-etcd
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25469"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-etcd
       uid: 04423032-206e-4156-947d-18af804d92d9
@@ -149,7 +149,7 @@ items:
                 message:
                   'etcd cluster "{{ $labels.job }}": insufficient members ({{ $value
                   }}).'
-              expr:
+              expr: |-
                 sum(up{job=~".*etcd.*"} == bool 1) by (job) < ((count(up{job=~".*etcd.*"})
                 by (job) + 1) / 2)
               for: 3m
@@ -171,7 +171,7 @@ items:
                   within the last 15 minutes. Frequent elections may be a sign of insufficient
                   resources, high network latency, or disruptions by other components and
                   should be investigated.'
-              expr:
+              expr: |-
                 increase((max by (job) (etcd_server_leader_changes_seen_total{job=~".*etcd.*"})
                 or 0*absent(etcd_server_leader_changes_seen_total{job=~".*etcd.*"}))[15m:1m])
                 >= 3
@@ -331,7 +331,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-general.rules
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25470"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-general.rules
       uid: bb59190a-84e9-4a44-a50d-8c7109fbf4d8
@@ -344,7 +344,7 @@ items:
                 message:
                   '{{ printf "%.4g" $value }}% of the {{ $labels.job }}/{{ $labels.service
                   }} targets in {{ $labels.namespace }} namespace are down.'
-              expr:
+              expr: |-
                 100 * (count(up == 0) BY (job, namespace, service) / count(up) BY (job,
                 namespace, service)) > 10
               for: 10m
@@ -399,7 +399,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-k8s.rules
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25471"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-k8s.rules
       uid: 465b61bd-cbc2-444b-880f-2999e23d46a6
@@ -407,7 +407,7 @@ items:
       groups:
         - name: k8s.rules
           rules:
-            - expr:
+            - expr: |-
                 sum(rate(container_cpu_usage_seconds_total{job="kubelet", metrics_path="/metrics/cadvisor",
                 image!="", container!="POD"}[5m])) by (namespace)
               record: namespace:container_cpu_usage_seconds_total:sum_rate
@@ -442,7 +442,7 @@ items:
                   max by(namespace, pod, node) (kube_pod_info{node!=""})
                 )
               record: node_namespace_pod_container:container_memory_swap
-            - expr:
+            - expr: |-
                 sum(container_memory_usage_bytes{job="kubelet", metrics_path="/metrics/cadvisor",
                 image!="", container!="POD"}) by (namespace)
               record: namespace:container_memory_usage_bytes:sum
@@ -543,7 +543,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kube-apiserver-availability.rules
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25472"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kube-apiserver-availability.rules
       uid: feec17a4-a121-4e2e-946c-f358f8b69def
@@ -720,7 +720,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kube-apiserver-slos
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25473"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kube-apiserver-slos
       uid: 1c2995b8-e454-4507-a746-cef05e70967d
@@ -822,7 +822,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kube-apiserver.rules
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25474"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kube-apiserver.rules
       uid: 05da5ef5-456b-40fc-a8e7-9b1c2893315f
@@ -1139,14 +1139,14 @@ items:
               labels:
                 verb: write
               record: code_resource:apiserver_request_total:rate5m
-            - expr:
+            - expr: |-
                 histogram_quantile(0.99, sum by (le, resource) (rate(apiserver_request_duration_seconds_bucket{job="apiserver",verb=~"LIST|GET"}[5m])))
                 > 0
               labels:
                 quantile: "0.99"
                 verb: read
               record: cluster_quantile:apiserver_request_duration_seconds:histogram_quantile
-            - expr:
+            - expr: |-
                 histogram_quantile(0.99, sum by (le, resource) (rate(apiserver_request_duration_seconds_bucket{job="apiserver",verb=~"POST|PUT|PATCH|DELETE"}[5m])))
                 > 0
               labels:
@@ -1158,19 +1158,19 @@ items:
                 /
                 sum(rate(apiserver_request_duration_seconds_count{subresource!="log",verb!~"LIST|WATCH|WATCHLIST|DELETECOLLECTION|PROXY|CONNECT"}[5m])) without(instance, pod)
               record: cluster:apiserver_request_duration_seconds:mean5m
-            - expr:
+            - expr: |-
                 histogram_quantile(0.99, sum(rate(apiserver_request_duration_seconds_bucket{job="apiserver",subresource!="log",verb!~"LIST|WATCH|WATCHLIST|DELETECOLLECTION|PROXY|CONNECT"}[5m]))
                 without(instance, pod))
               labels:
                 quantile: "0.99"
               record: cluster_quantile:apiserver_request_duration_seconds:histogram_quantile
-            - expr:
+            - expr: |-
                 histogram_quantile(0.9, sum(rate(apiserver_request_duration_seconds_bucket{job="apiserver",subresource!="log",verb!~"LIST|WATCH|WATCHLIST|DELETECOLLECTION|PROXY|CONNECT"}[5m]))
                 without(instance, pod))
               labels:
                 quantile: "0.9"
               record: cluster_quantile:apiserver_request_duration_seconds:histogram_quantile
-            - expr:
+            - expr: |-
                 histogram_quantile(0.5, sum(rate(apiserver_request_duration_seconds_bucket{job="apiserver",subresource!="log",verb!~"LIST|WATCH|WATCHLIST|DELETECOLLECTION|PROXY|CONNECT"}[5m]))
                 without(instance, pod))
               labels:
@@ -1214,7 +1214,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kube-prometheus-general.rules
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25475"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kube-prometheus-general.rules
       uid: 0b06eed6-0dac-4208-a1b4-4075b9619642
@@ -1264,7 +1264,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kube-prometheus-node-recording.rules
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25476"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kube-prometheus-node-recording.rules
       uid: 08ffaa2e-4c69-4c52-bf11-c517a37be04a
@@ -1272,7 +1272,7 @@ items:
       groups:
         - name: kube-prometheus-node-recording.rules
           rules:
-            - expr:
+            - expr: |-
                 sum(rate(node_cpu_seconds_total{mode!="idle",mode!="iowait"}[3m])) BY
                 (instance)
               record: instance:node_cpu:rate:sum
@@ -1280,14 +1280,14 @@ items:
               record: instance:node_network_receive_bytes:rate:sum
             - expr: sum(rate(node_network_transmit_bytes_total[3m])) BY (instance)
               record: instance:node_network_transmit_bytes:rate:sum
-            - expr:
+            - expr: |-
                 sum(rate(node_cpu_seconds_total{mode!="idle",mode!="iowait"}[5m])) WITHOUT
                 (cpu, mode) / ON(instance) GROUP_LEFT() count(sum(node_cpu_seconds_total)
                 BY (instance, cpu)) BY (instance)
               record: instance:node_cpu:ratio
             - expr: sum(rate(node_cpu_seconds_total{mode!="idle",mode!="iowait"}[5m]))
               record: cluster:node_cpu:sum_rate5m
-            - expr:
+            - expr: |-
                 cluster:node_cpu_seconds_total:rate5m / count(sum(node_cpu_seconds_total)
                 BY (instance, cpu))
               record: cluster:node_cpu:ratio
@@ -1329,7 +1329,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kube-scheduler.rules
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25477"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kube-scheduler.rules
       uid: 02a085ff-3321-4064-9dea-f0ced7b6a1eb
@@ -1337,55 +1337,55 @@ items:
       groups:
         - name: kube-scheduler.rules
           rules:
-            - expr:
+            - expr: |-
                 histogram_quantile(0.99, sum(rate(scheduler_e2e_scheduling_duration_seconds_bucket{job="kube-scheduler"}[5m]))
                 without(instance, pod))
               labels:
                 quantile: "0.99"
               record: cluster_quantile:scheduler_e2e_scheduling_duration_seconds:histogram_quantile
-            - expr:
+            - expr: |-
                 histogram_quantile(0.99, sum(rate(scheduler_scheduling_algorithm_duration_seconds_bucket{job="kube-scheduler"}[5m]))
                 without(instance, pod))
               labels:
                 quantile: "0.99"
               record: cluster_quantile:scheduler_scheduling_algorithm_duration_seconds:histogram_quantile
-            - expr:
+            - expr: |-
                 histogram_quantile(0.99, sum(rate(scheduler_binding_duration_seconds_bucket{job="kube-scheduler"}[5m]))
                 without(instance, pod))
               labels:
                 quantile: "0.99"
               record: cluster_quantile:scheduler_binding_duration_seconds:histogram_quantile
-            - expr:
+            - expr: |-
                 histogram_quantile(0.9, sum(rate(scheduler_e2e_scheduling_duration_seconds_bucket{job="kube-scheduler"}[5m]))
                 without(instance, pod))
               labels:
                 quantile: "0.9"
               record: cluster_quantile:scheduler_e2e_scheduling_duration_seconds:histogram_quantile
-            - expr:
+            - expr: |-
                 histogram_quantile(0.9, sum(rate(scheduler_scheduling_algorithm_duration_seconds_bucket{job="kube-scheduler"}[5m]))
                 without(instance, pod))
               labels:
                 quantile: "0.9"
               record: cluster_quantile:scheduler_scheduling_algorithm_duration_seconds:histogram_quantile
-            - expr:
+            - expr: |-
                 histogram_quantile(0.9, sum(rate(scheduler_binding_duration_seconds_bucket{job="kube-scheduler"}[5m]))
                 without(instance, pod))
               labels:
                 quantile: "0.9"
               record: cluster_quantile:scheduler_binding_duration_seconds:histogram_quantile
-            - expr:
+            - expr: |-
                 histogram_quantile(0.5, sum(rate(scheduler_e2e_scheduling_duration_seconds_bucket{job="kube-scheduler"}[5m]))
                 without(instance, pod))
               labels:
                 quantile: "0.5"
               record: cluster_quantile:scheduler_e2e_scheduling_duration_seconds:histogram_quantile
-            - expr:
+            - expr: |-
                 histogram_quantile(0.5, sum(rate(scheduler_scheduling_algorithm_duration_seconds_bucket{job="kube-scheduler"}[5m]))
                 without(instance, pod))
               labels:
                 quantile: "0.5"
               record: cluster_quantile:scheduler_scheduling_algorithm_duration_seconds:histogram_quantile
-            - expr:
+            - expr: |-
                 histogram_quantile(0.5, sum(rate(scheduler_binding_duration_seconds_bucket{job="kube-scheduler"}[5m]))
                 without(instance, pod))
               labels:
@@ -1429,7 +1429,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kube-state-metrics
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25485"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kube-state-metrics
       uid: 1f93a348-07f7-4ded-9408-86eb45b88afc
@@ -1507,7 +1507,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kubelet.rules
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25497"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kubelet.rules
       uid: bedd6271-81e0-492d-b941-8e62000392f5
@@ -1515,21 +1515,21 @@ items:
       groups:
         - name: kubelet.rules
           rules:
-            - expr:
+            - expr: |-
                 histogram_quantile(0.99, sum(rate(kubelet_pleg_relist_duration_seconds_bucket[5m]))
                 by (instance, le) * on(instance) group_left(node) kubelet_node_name{job="kubelet",
                 metrics_path="/metrics"})
               labels:
                 quantile: "0.99"
               record: node_quantile:kubelet_pleg_relist_duration_seconds:histogram_quantile
-            - expr:
+            - expr: |-
                 histogram_quantile(0.9, sum(rate(kubelet_pleg_relist_duration_seconds_bucket[5m]))
                 by (instance, le) * on(instance) group_left(node) kubelet_node_name{job="kubelet",
                 metrics_path="/metrics"})
               labels:
                 quantile: "0.9"
               record: node_quantile:kubelet_pleg_relist_duration_seconds:histogram_quantile
-            - expr:
+            - expr: |-
                 histogram_quantile(0.5, sum(rate(kubelet_pleg_relist_duration_seconds_bucket[5m]))
                 by (instance, le) * on(instance) group_left(node) kubelet_node_name{job="kubelet",
                 metrics_path="/metrics"})
@@ -1574,7 +1574,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kubernetes-apps
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25498"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kubernetes-apps
       uid: 956dc87d-c781-44df-a1f5-1bc52d920b0d
@@ -1589,7 +1589,7 @@ items:
                   }}) is restarting {{ printf "%.2f" $value }} times / 5 minutes.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepodcrashlooping
                 summary: Pod is crash looping.
-              expr:
+              expr: |-
                 rate(kube_pod_container_status_restarts_total{job="kube-state-metrics",
                 namespace=~".*"}[5m]) * 60 * 5 > 0
               for: 15m
@@ -1753,7 +1753,7 @@ items:
                   $labels.container}} has been in waiting state for longer than 1 hour.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubecontainerwaiting
                 summary: Pod container waiting longer than 1 hour
-              expr:
+              expr: |-
                 sum by (namespace, pod, container) (kube_pod_container_status_waiting_reason{job="kube-state-metrics",
                 namespace=~".*"}) > 0
               for: 1h
@@ -1780,7 +1780,7 @@ items:
                   $labels.daemonset }} are running where they are not supposed to run."
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubedaemonsetmisscheduled
                 summary: DaemonSet pods are misscheduled.
-              expr:
+              expr: |-
                 kube_daemonset_status_number_misscheduled{job="kube-state-metrics",
                 namespace=~".*"} > 0
               for: 15m
@@ -1793,7 +1793,7 @@ items:
                   more than 12 hours to complete.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubejobcompletion
                 summary: Job did not complete in time
-              expr:
+              expr: |-
                 kube_job_spec_completions{job="kube-state-metrics", namespace=~".*"}
                 - kube_job_status_succeeded{job="kube-state-metrics", namespace=~".*"}  >
                 0
@@ -1879,7 +1879,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kubernetes-resources
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25499"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kubernetes-resources
       uid: e218cf7c-660c-4cf4-874a-87c65b456b6c
@@ -2046,7 +2046,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kubernetes-storage
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25500"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kubernetes-storage
       uid: f674d104-28a6-4318-81ba-163e91d2f1f1
@@ -2097,9 +2097,8 @@ items:
                   {{ $labels.phase }}.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepersistentvolumeerrors
                 summary: PersistentVolume is having issues with provisioning.
-              expr:
-                kube_persistentvolume_status_phase{phase=~"Failed|Pending",job="kube-state-metrics"}
-                > 0
+              expr: |-
+                kube_persistentvolume_status_phase{phase=~"Failed|Pending",job="kube-state-metrics"} > 0
               for: 5m
               labels:
                 severity: critical
@@ -2141,7 +2140,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kubernetes-system
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25505"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kubernetes-system
       uid: 873b458d-60b5-4948-8275-463b9f75d966
@@ -2156,7 +2155,7 @@ items:
                   components running.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeversionmismatch
                 summary: Different semantic versions of Kubernetes components running.
-              expr:
+              expr: |-
                 count(count by (gitVersion) (label_replace(kubernetes_build_info{job!~"kube-dns|coredns"},"gitVersion","$1","gitVersion","(v[0-9]*.[0-9]*).*")))
                 > 1
               for: 15m
@@ -2215,7 +2214,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kubernetes-system-apiserver
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25501"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kubernetes-system-apiserver
       uid: e344a672-7f80-46ec-acf6-10a82d502b64
@@ -2230,7 +2229,7 @@ items:
                   is expiring in less than 7.0 days.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeclientcertificateexpiration
                 summary: Client certificate is about to expire.
-              expr:
+              expr: |-
                 apiserver_client_certificate_expiration_seconds_count{job="apiserver"}
                 > 0 and on(job) histogram_quantile(0.01, sum by (job, le) (rate(apiserver_client_certificate_expiration_seconds_bucket{job="apiserver"}[5m])))
                 < 604800
@@ -2243,7 +2242,7 @@ items:
                   is expiring in less than 24.0 hours.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeclientcertificateexpiration
                 summary: Client certificate is about to expire.
-              expr:
+              expr: |-
                 apiserver_client_certificate_expiration_seconds_count{job="apiserver"}
                 > 0 and on(job) histogram_quantile(0.01, sum by (job, le) (rate(apiserver_client_certificate_expiration_seconds_bucket{job="apiserver"}[5m])))
                 < 86400
@@ -2258,7 +2257,7 @@ items:
                   changes too often.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-aggregatedapierrors
                 summary: An aggregated API has reported errors.
-              expr:
+              expr: |-
                 sum by(name, namespace)(increase(aggregator_unavailable_apiservice_count[5m]))
                 > 2
               labels:
@@ -2270,7 +2269,7 @@ items:
                   has been only {{ $value | humanize }}% available over the last 10m.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-aggregatedapidown
                 summary: An aggregated API is down.
-              expr:
+              expr: |-
                 (1 - max by(name, namespace)(avg_over_time(aggregator_unavailable_apiservice[10m])))
                 * 100 < 85
               for: 5m
@@ -2323,7 +2322,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kubernetes-system-controller-manager
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25502"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kubernetes-system-controller-manager
       uid: f594a7c2-4ced-4969-95b9-15bd614b248a
@@ -2380,7 +2379,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kubernetes-system-kubelet
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25503"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kubernetes-system-kubelet
       uid: 25d64680-a1de-4588-ab9c-4470109c7081
@@ -2393,7 +2392,7 @@ items:
                 description: "{{ $labels.node }} has been unready for more than 15 minutes."
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubenodenotready
                 summary: Node is not ready.
-              expr:
+              expr: |-
                 kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"}
                 == 0
               for: 15m
@@ -2406,7 +2405,7 @@ items:
                   rescheduled."
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubenodeunreachable
                 summary: Node is unreachable.
-              expr:
+              expr: |-
                 (kube_node_spec_taint{job="kube-state-metrics",key="node.kubernetes.io/unreachable",effect="NoSchedule"}
                 unless ignoring(key,value) kube_node_spec_taint{job="kube-state-metrics",key=~"ToBeDeletedByClusterAutoscaler|cloud.google.com/impending-node-termination|aws-node-termination-handler/spot-itn"})
                 == 1
@@ -2438,7 +2437,7 @@ items:
                   {{ $value }} times in the last 15 minutes.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubenodereadinessflapping
                 summary: Node readiness status is flapping.
-              expr:
+              expr: |-
                 sum(changes(kube_node_status_condition{status="true",condition="Ready"}[15m]))
                 by (node) > 2
               for: 15m
@@ -2451,7 +2450,7 @@ items:
                   duration of {{ $value }} seconds on node {{ $labels.node }}.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeletplegdurationhigh
                 summary: Kubelet Pod Lifecycle Event Generator is taking too long to relist.
-              expr:
+              expr: |-
                 node_quantile:kubelet_pleg_relist_duration_seconds:histogram_quantile{quantile="0.99"}
                 >= 10
               for: 5m
@@ -2464,7 +2463,7 @@ items:
                   seconds on node {{ $labels.node }}.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeletpodstartuplatencyhigh
                 summary: Kubelet Pod startup latency is too high.
-              expr:
+              expr: |-
                 histogram_quantile(0.99, sum(rate(kubelet_pod_worker_duration_seconds_bucket{job="kubelet",
                 metrics_path="/metrics"}[5m])) by (instance, le)) * on(instance) group_left(node)
                 kubelet_node_name{job="kubelet", metrics_path="/metrics"} > 60
@@ -2518,7 +2517,7 @@ items:
                   client certificate ({{ $value | humanize }} errors in the last 5 minutes).
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeletclientcertificaterenewalerrors
                 summary: Kubelet has failed to renew its client certificate.
-              expr:
+              expr: |-
                 increase(kubelet_certificate_manager_client_expiration_renew_errors[5m])
                 > 0
               for: 15m
@@ -2582,7 +2581,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-kubernetes-system-scheduler
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25504"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-kubernetes-system-scheduler
       uid: c5eb38ca-a27a-488e-91eb-e077746d3d11
@@ -2637,7 +2636,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-node-exporter
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25507"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-node-exporter
       uid: 45ba399f-9f01-4542-ab17-51aeaa26fddd
@@ -2874,7 +2873,7 @@ items:
                   drives is insufficient to fix issue automatically.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-noderaiddegraded
                 summary: RAID Array is degraded
-              expr:
+              expr: |-
                 node_md_disks_required - ignoring (state) (node_md_disks{state="active"})
                 > 0
               for: 15m
@@ -2929,7 +2928,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-node-exporter.rules
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25506"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-node-exporter.rules
       uid: 12130054-c85a-449f-b056-21f14669cd6d
@@ -3027,7 +3026,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-node-network
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25509"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-node-network
       uid: 3c336065-4502-4f4e-9344-0d7fc8f85fc2
@@ -3040,7 +3039,7 @@ items:
                 message:
                   Network interface "{{ $labels.device }}" changing it's up status
                   often on node-exporter {{ $labels.namespace }}/{{ $labels.pod }}"
-              expr:
+              expr: |-
                 changes(node_network_up{job="node-exporter",device!~"veth.+"}[2m]) >
                 2
               for: 2m
@@ -3084,7 +3083,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-node.rules
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25510"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-node.rules
       uid: 02d8ad3c-7c8d-4384-8a17-b8cfee6b63a6
@@ -3156,7 +3155,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-prometheus
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25512"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-prometheus
       uid: 1a2f27f4-909d-4dbf-ba73-7da6ce1273c1
@@ -3253,7 +3252,7 @@ items:
                   Prometheus {{$labels.namespace}}/{{$labels.pod}} has detected
                   {{$value | humanize}} reload failures over the last 3h.
                 summary: Prometheus has issues reloading blocks from disk.
-              expr:
+              expr: |-
                 increase(prometheus_tsdb_reloads_failures_total{job="prometheus-kube-prometheus-prometheus",namespace="prometheus"}[3h])
                 > 0
               for: 4h
@@ -3265,7 +3264,7 @@ items:
                   Prometheus {{$labels.namespace}}/{{$labels.pod}} has detected
                   {{$value | humanize}} compaction failures over the last 3h.
                 summary: Prometheus has issues compacting blocks.
-              expr:
+              expr: |-
                 increase(prometheus_tsdb_compactions_failed_total{job="prometheus-kube-prometheus-prometheus",namespace="prometheus"}[3h])
                 > 0
               for: 4h
@@ -3277,7 +3276,7 @@ items:
                   Prometheus {{$labels.namespace}}/{{$labels.pod}} is not ingesting
                   samples.
                 summary: Prometheus is not ingesting samples.
-              expr:
+              expr: |-
                 rate(prometheus_tsdb_head_samples_appended_total{job="prometheus-kube-prometheus-prometheus",namespace="prometheus"}[5m])
                 <= 0
               for: 10m
@@ -3290,7 +3289,7 @@ items:
                   {{ printf "%.4g" $value  }} samples/s with different values but duplicated
                   timestamp.
                 summary: Prometheus is dropping samples with duplicate timestamps.
-              expr:
+              expr: |-
                 rate(prometheus_target_scrapes_sample_duplicate_timestamp_total{job="prometheus-kube-prometheus-prometheus",namespace="prometheus"}[5m])
                 > 0
               for: 10m
@@ -3303,7 +3302,7 @@ items:
                   {{ printf "%.4g" $value  }} samples/s with timestamps arriving out of
                   order.
                 summary: Prometheus drops samples with out-of-order timestamps.
-              expr:
+              expr: |-
                 rate(prometheus_target_scrapes_sample_out_of_order_total{job="prometheus-kube-prometheus-prometheus",namespace="prometheus"}[5m])
                 > 0
               for: 10m
@@ -3378,7 +3377,7 @@ items:
                   Prometheus {{$labels.namespace}}/{{$labels.pod}} has failed
                   to evaluate {{ printf "%.0f" $value }} rules in the last 5m.
                 summary: Prometheus is failing rule evaluations.
-              expr:
+              expr: |-
                 increase(prometheus_rule_evaluation_failures_total{job="prometheus-kube-prometheus-prometheus",namespace="prometheus"}[5m])
                 > 0
               for: 15m
@@ -3390,7 +3389,7 @@ items:
                   Prometheus {{$labels.namespace}}/{{$labels.pod}} has missed
                   {{ printf "%.0f" $value }} rule group evaluations in the last 5m.
                 summary: Prometheus is missing rule evaluations due to slow rule group evaluation.
-              expr:
+              expr: |-
                 increase(prometheus_rule_group_iterations_missed_total{job="prometheus-kube-prometheus-prometheus",namespace="prometheus"}[5m])
                 > 0
               for: 15m
@@ -3434,7 +3433,7 @@ items:
           operation: Update
           time: "2020-10-08T11:24:30Z"
       name: prometheus-kube-prometheus-prometheus-operator
-      namespace: prometheus
+      namespace: monitoring
       resourceVersion: "25511"
       selfLink: /apis/monitoring.coreos.com/v1/namespaces/prometheus/prometheusrules/prometheus-kube-prometheus-prometheus-operator
       uid: 0781b731-b937-4769-b205-1f0af7a7a822
@@ -3449,7 +3448,7 @@ items:
                   in {{$labels.namespace}} namespace.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-prometheusoperatorlisterrors
                 summary: Errors while performing list operations in controller.
-              expr:
+              expr: |-
                 (sum by (controller,namespace) (rate(prometheus_operator_list_operations_failed_total{job="prometheus-kube-prometheus-operator",namespace="prometheus"}[10m]))
                 / sum by (controller,namespace) (rate(prometheus_operator_list_operations_total{job="prometheus-kube-prometheus-operator",namespace="prometheus"}[10m])))
                 > 0.4
@@ -3463,7 +3462,7 @@ items:
                   in {{$labels.namespace}} namespace.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-prometheusoperatorwatcherrors
                 summary: Errors while performing watch operations in controller.
-              expr:
+              expr: |-
                 (sum by (controller,namespace) (rate(prometheus_operator_watch_operations_failed_total{job="prometheus-kube-prometheus-operator",namespace="prometheus"}[10m]))
                 / sum by (controller,namespace) (rate(prometheus_operator_watch_operations_total{job="prometheus-kube-prometheus-operator",namespace="prometheus"}[10m])))
                 > 0.4
@@ -3478,7 +3477,7 @@ items:
                   }} namespace."
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-prometheusoperatorreconcileerrors
                 summary: Errors while reconciling controller.
-              expr:
+              expr: |-
                 (sum by (controller,namespace) (rate(prometheus_operator_reconcile_errors_total{job="prometheus-kube-prometheus-operator",namespace="prometheus"}[5m])))
                 / (sum by (controller,namespace) (rate(prometheus_operator_reconcile_operations_total{job="prometheus-kube-prometheus-operator",namespace="prometheus"}[5m])))
                 > 0.1
@@ -3492,7 +3491,7 @@ items:
                   }} Namespace.
                 runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-prometheusoperatornodelookuperrors
                 summary: Errors while reconciling Prometheus.
-              expr:
+              expr: |-
                 rate(prometheus_operator_node_address_lookup_errors_total{job="prometheus-kube-prometheus-operator",namespace="prometheus"}[5m])
                 > 0.1
               for: 10m
